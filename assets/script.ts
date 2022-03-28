@@ -1,5 +1,5 @@
 
-import { _decorator, Component, Node, assetManager, ImageAsset, error, resources, Sprite, SpriteFrame, Texture2D } from 'cc';
+import { _decorator, Component, Node, assetManager, ImageAsset, error, resources, Sprite, SpriteFrame, Canvas, Texture2D, Slider, Vec3, AudioSource, Button } from 'cc';
 const { ccclass, property } = _decorator;
 
 /**
@@ -13,7 +13,8 @@ const { ccclass, property } = _decorator;
  * ManualUrl = https://docs.cocos.com/creator/3.4/manual/en/
  *
  */
- 
+
+
 @ccclass('script')
 export class script extends Component {
     // [1]
@@ -24,9 +25,24 @@ export class script extends Component {
     @property( {type: Sprite} )
     // @ts-ignore
     private demoSprite: Sprite = null;
-
+    private position: Vec3 = new Vec3();
+    @property( {type: Slider} )
+    private vSlider: Slider = null;
+    @property( {type: Slider} )
+    private hSlider: Slider = null;
+    @property( {type: AudioSource})
+    private audioSource: AudioSource = null;
+    @property( {type: Button })
+    private playButton: Button = null;
+    @property( {type: Button })
+    private pauseButton: Button = null;
+    @property( {type: Button })
+    private stopButton: Button = null;
     start () {
         var root = this.node;
+        this.position.x = this.demoSprite.node.position.x;
+        console.log('pos', this.position);
+        //this.demoSprite.scale = 3;
         // [3]
 
         // Remote texture url with file extensions
@@ -65,28 +81,53 @@ export class script extends Component {
         // });
 
         // add image from static asset
-        //var sprite = this.getComponent(Sprite);
-        resources.preload("head2/spriteFrame", SpriteFrame);
-        resources.load("head2/spriteFrame", SpriteFrame, function (err, spriteFrame) {
-            if (err) {
-                error(err.message || err);
-                return;
-            }
-            spriteFrame.addRef();
+        // var sprite = this.getComponent(Sprite);
+        // resources.preload("head2/spriteFrame", SpriteFrame);
+        // resources.load("head2/spriteFrame", SpriteFrame, function (err, spriteFrame) {
+        //     if (err) {
+        //         error(err.message || err);
+        //         return;
+        //     }
+        //     spriteFrame.addRef();
             
-            // 1st choice
-            var node = new Node("Head Sprite");
-            var sprite = node.addComponent(Sprite);
-            sprite.spriteFrame = spriteFrame; 
-            node.setPosition(0,0);
-
-            node.parent = root;
-
-            // 2nd choice
-            //sprite.spriteFrame = spriteFrame;
-        });
+        //     // 1st choice
+        //     var canvas = root.addComponent(Canvas);
+        //     var sprite = canvas.addComponent(Sprite);
+        //     sprite.spriteFrame = spriteFrame; 
+            
+        //     // 2nd choice
+        //     //sprite.spriteFrame = spriteFrame;
+        // });
     }
 
+    onLoad() {
+        this.hSlider.node.on('slide', this.callbackAnim, this);
+        this.vSlider.node.on('slide', this.callbackScale, this);
+        this.playButton.node.on('click', this.callbackPlay, this);
+        this.pauseButton.node.on('click', this.callbackPause, this);
+        this.stopButton.node.on('click', this.callbackStop, this);
+    }
+
+    callbackAnim(Slider) {
+        this.demoSprite.node.setPosition(this.position.x + 400 * (Slider.progress - .5), this.position.y, this.position.z);
+    }
+
+    callbackScale(Slider) {
+        this.demoSprite.node.scale = new Vec3(2 * Slider.progress, 2 * Slider.progress, this.demoSprite.node.scale.z);
+    }
+
+    callbackPlay(button) {
+        console.log('play')
+        this.audioSource.play();
+    }
+    callbackPause(button) {
+        console.log('pause')
+        this.audioSource.pause();
+    }
+    callbackStop(button) {
+        console.log('stop')
+        this.audioSource.stop();
+    }
     // update (deltaTime: number) {
     //     // [4]
     // }

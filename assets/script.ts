@@ -22,6 +22,8 @@ export class script extends Component {
 
     // [2]
     // @property
+    @property( {type: Canvas} )
+    private root: Canvas = null;
     @property( {type: Sprite} )
     // @ts-ignore
     private demoSprite: Sprite = null;
@@ -38,8 +40,10 @@ export class script extends Component {
     private pauseButton: Button = null;
     @property( {type: Button })
     private stopButton: Button = null;
+
+    private apple: Sprite = null;
+    private slider2: Slider = null;
     start () {
-        var root = this.node;
         this.position.x = this.demoSprite.node.position.x;
         console.log('pos', this.position);
         //this.demoSprite.scale = 3;
@@ -80,24 +84,6 @@ export class script extends Component {
         //     cc.audioEngine.play(audioClip);
         // });
 
-        // add image from static asset
-        // var sprite = this.getComponent(Sprite);
-        // resources.preload("head2/spriteFrame", SpriteFrame);
-        // resources.load("head2/spriteFrame", SpriteFrame, function (err, spriteFrame) {
-        //     if (err) {
-        //         error(err.message || err);
-        //         return;
-        //     }
-        //     spriteFrame.addRef();
-            
-        //     // 1st choice
-        //     var canvas = root.addComponent(Canvas);
-        //     var sprite = canvas.addComponent(Sprite);
-        //     sprite.spriteFrame = spriteFrame; 
-            
-        //     // 2nd choice
-        //     //sprite.spriteFrame = spriteFrame;
-        // });
     }
 
     onLoad() {
@@ -106,10 +92,37 @@ export class script extends Component {
         this.playButton.node.on('click', this.callbackPlay, this);
         this.pauseButton.node.on('click', this.callbackPause, this);
         this.stopButton.node.on('click', this.callbackStop, this);
+        
+        // add image from static asset
+        var root = this.root;
+        var self = this;
+        resources.preload("images/apple/spriteFrame", SpriteFrame);
+        resources.load("images/apple/spriteFrame", SpriteFrame, function (err, spriteFrame) {
+            if (err) {
+                error(err.message || err);
+                return;
+            }
+            spriteFrame.addRef();
+            
+            // 1st choice
+            var sprite = root.addComponent(Sprite);
+            sprite.spriteFrame = spriteFrame;
+            
+            self.apple = sprite;
+        });
+
+        this.slider2 = root.addComponent(Slider);
+        this.slider2.node.on('slide', this.callbackAnim2, this);
+        this.slider2.node.setPosition(100,100,5);
+        console.log('load', this.slider2)
     }
 
     callbackAnim(Slider) {
         this.demoSprite.node.setPosition(this.position.x + 400 * (Slider.progress - .5), this.position.y, this.position.z);
+    }
+
+    callbackAnim2(Slider) {
+        this.apple.node.setPosition(this.position.x + 400 * (Slider.progress - .5), this.position.y, this.position.z);
     }
 
     callbackScale(Slider) {

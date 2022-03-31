@@ -1979,6 +1979,9 @@
     },
     "_enabled": true,
     "__prefab": null,
+    "root": {
+      "__id__": 51
+    },
     "demoSprite": {
       "__id__": 10
     },

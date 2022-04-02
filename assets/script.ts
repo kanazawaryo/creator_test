@@ -1,5 +1,5 @@
 
-import { _decorator, Component, Node, assetManager, ImageAsset, error, resources, Sprite, SpriteFrame, Canvas, Texture2D, Slider, Vec3, AudioSource, Button } from 'cc';
+import { _decorator, Component, Node, assetManager, game, tween, instantiate, director, Prefab, error, resources, Sprite, SpriteFrame, Canvas, Texture2D, Slider, Vec3, AudioSource, Button, Label } from 'cc';
 const { ccclass, property } = _decorator;
 
 /**
@@ -24,10 +24,7 @@ export class script extends Component {
     // @property
     @property( {type: Canvas} )
     private root: Canvas = null;
-    @property( {type: Sprite} )
-    // @ts-ignore
-    private demoSprite: Sprite = null;
-    private position: Vec3 = new Vec3();
+    
     @property( {type: Slider} )
     private vSlider: Slider = null;
     @property( {type: Slider} )
@@ -41,11 +38,118 @@ export class script extends Component {
     @property( {type: Button })
     private stopButton: Button = null;
 
+    @property( {type: Sprite })
     private apple: Sprite = null;
-    private slider2: Slider = null;
+    private rotation: Vec3 = null;
+
+    onLoad() {console.log('onLoad')
+        // add image from static asset
+        var self = this;
+        const root = this.root = director.getScene().getComponentInChildren(Canvas);
+        // resources.preload("image/apple/spriteFrame", SpriteFrame);
+        // resources.load("image/apple/spriteFrame", SpriteFrame, function (err, spriteFrame) {
+        //     if (err) {
+        //         error(err.message || err);
+        //         return;
+        //     }
+        //     spriteFrame.addRef();
+
+        //     // 1st choice
+        //     var sprite = root.node.addComponent(Sprite);
+        //     sprite.spriteFrame = spriteFrame;
+            
+        //     self.apple = sprite;
+        // });
+
+        resources.load("prefab/spriteFrame", Prefab, (err, prefab) => {
+            if (err) {
+                error(err.message || err);
+                return;
+            }
+            console.log("load sprite")
+            prefab.addRef();
+
+            const parent = instantiate(prefab);
+            parent.parent = root.node;
+
+            self.apple = parent.getComponent(Sprite);
+            self.rotation = self.apple.node.eulerAngles;
+            tween(this.rotation).by(4, new Vec3(0, 0, 360)).repeatForever().start();
+            console.log('apple', self.apple)
+        });
+
+        resources.load("prefab/Slider", Prefab, (err, prefab) => {
+            if (err) {
+                error(err.message || err);
+                return;
+            }
+
+            prefab.addRef();
+
+            const hSliderParent = instantiate(prefab);
+            hSliderParent.setPosition(0, -200);
+            hSliderParent.parent = root.node;
+
+            const hSlider = hSliderParent.getComponent(Slider);
+            hSlider.node.on('slide', self.callbackAnim, self);
+            hSlider.progress = .5;
+            self.hSlider = hSlider;
+
+            const vSliderParent = instantiate(prefab);
+            vSliderParent.setPosition(200, 0);
+            vSliderParent.parent = root.node;
+
+            const vSlider = vSliderParent.getComponent(Slider);
+            vSlider.node.on('slide', self.callbackScale, self);
+            vSlider.direction = 1;
+            vSlider.progress = .5;
+            self.vSlider = vSlider;
+        });
+
+        resources.load("prefab/Button", Prefab, (err, prefab) => {
+            if (err) {
+                error(err.message || err);
+                return;
+            }
+
+            const playParent = instantiate(prefab);
+            playParent.setPosition(-150, 200);
+            playParent.parent = root.node;
+            const playBtn = playParent.getComponent(Button);
+            playBtn.node.on('click', self.callbackPlay, self);
+            const playLabel = playParent.getComponentInChildren(Label);
+            playLabel.string = "Play";
+
+            const pauseParent = instantiate(prefab);
+            pauseParent.setPosition(0, 200);
+            pauseParent.parent = root.node;
+            const pauseBtn = pauseParent.getComponent(Button);
+            pauseBtn.node.on('click', self.callbackPause, self);
+            const pauseLabel = pauseParent.getComponentInChildren(Label);
+            pauseLabel.string = "Pause";
+
+            const stopParent = instantiate(prefab);
+            stopParent.setPosition(150, 200);
+            stopParent.parent = root.node;
+            const stopBtn = stopParent.getComponent(Button);
+            stopBtn.node.on('click', self.callbackStop, self);
+            const stopLabel = stopParent.getComponentInChildren(Label);
+            stopLabel.string = "Stop";
+        });
+
+        resources.load("prefab/audio", Prefab, (err, prefab) => {
+            if (err) {
+                error(err.message || err);
+                return;
+            }
+
+            const audioParent = instantiate(prefab);
+            audioParent.parent = root.node;
+            this.audioSource = audioParent.getComponent(AudioSource);
+        });
+    }
+    
     start () {
-        this.position.x = this.demoSprite.node.position.x;
-        console.log('pos', this.position);
         //this.demoSprite.scale = 3;
         // [3]
 
@@ -86,47 +190,12 @@ export class script extends Component {
 
     }
 
-    onLoad() {
-        this.hSlider.node.on('slide', this.callbackAnim, this);
-        this.vSlider.node.on('slide', this.callbackScale, this);
-        this.playButton.node.on('click', this.callbackPlay, this);
-        this.pauseButton.node.on('click', this.callbackPause, this);
-        this.stopButton.node.on('click', this.callbackStop, this);
-        
-        // add image from static asset
-        var root = this.root;
-        var self = this;
-        resources.preload("images/apple/spriteFrame", SpriteFrame);
-        resources.load("images/apple/spriteFrame", SpriteFrame, function (err, spriteFrame) {
-            if (err) {
-                error(err.message || err);
-                return;
-            }
-            spriteFrame.addRef();
-            
-            // 1st choice
-            var sprite = root.addComponent(Sprite);
-            sprite.spriteFrame = spriteFrame;
-            
-            self.apple = sprite;
-        });
-
-        this.slider2 = root.addComponent(Slider);
-        this.slider2.node.on('slide', this.callbackAnim2, this);
-        this.slider2.node.setPosition(100,100,5);
-        console.log('load', this.slider2)
+    callbackAnim(slider) {
+        this.apple.node.setPosition(400 * (slider.progress - .5), 0);
     }
 
-    callbackAnim(Slider) {
-        this.demoSprite.node.setPosition(this.position.x + 400 * (Slider.progress - .5), this.position.y, this.position.z);
-    }
-
-    callbackAnim2(Slider) {
-        this.apple.node.setPosition(this.position.x + 400 * (Slider.progress - .5), this.position.y, this.position.z);
-    }
-
-    callbackScale(Slider) {
-        this.demoSprite.node.scale = new Vec3(2 * Slider.progress, 2 * Slider.progress, this.demoSprite.node.scale.z);
+    callbackScale(slider) {
+        this.apple.node.scale = new Vec3(2 * slider.progress, 2 * slider.progress);
     }
 
     callbackPlay(button) {
@@ -141,9 +210,12 @@ export class script extends Component {
         console.log('stop')
         this.audioSource.stop();
     }
-    // update (deltaTime: number) {
-    //     // [4]
-    // }
+    update (deltaTime: number) {
+        if (this.apple == null)
+            return;
+        
+        this.apple.node.eulerAngles = this.rotation;
+    }
 }
 
 /**

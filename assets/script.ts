@@ -1,5 +1,5 @@
 
-import { _decorator, Component, Node, assetManager, game, tween, instantiate, director, Prefab, error, resources, Sprite, SpriteFrame, Canvas, Texture2D, Slider, Vec3, AudioSource, Button, Label } from 'cc';
+import { _decorator, Component, Animation, Node, assetManager, game, tween, instantiate, director, Prefab, error, resources, Sprite, SpriteFrame, Canvas, Texture2D, Slider, Vec3, Vec2, AudioSource, Button, Label } from 'cc';
 const { ccclass, property } = _decorator;
 
 /**
@@ -40,6 +40,7 @@ export class script extends Component {
 
     @property( {type: Sprite })
     private apple: Sprite = null;
+    private anim: Animation = null;
     private rotation: Vec3 = null;
 
     onLoad() {console.log('onLoad')
@@ -73,8 +74,11 @@ export class script extends Component {
             parent.parent = root.node;
 
             self.apple = parent.getComponent(Sprite);
-            self.rotation = self.apple.node.eulerAngles;
-            tween(this.rotation).by(4, new Vec3(0, 0, 360)).repeatForever().start();
+            self.anim = parent.getComponent(Animation);
+            //self.rotation = self.apple.node.eulerAngles;
+            //tween(this.rotation).by(4, new Vec3(0, 0, 360)).repeatForever().start();
+
+
             console.log('apple', self.apple)
         });
 
@@ -135,6 +139,18 @@ export class script extends Component {
             stopBtn.node.on('click', self.callbackStop, self);
             const stopLabel = stopParent.getComponentInChildren(Label);
             stopLabel.string = "Stop";
+
+            const poses = [new Vec2(-150, -150), new Vec2(0, -150), new Vec2(150, -150), new Vec2(300, -150)];
+            const cbs = [self.callbackPlayAnim, self.callbackPauseAnim, self.callbackResumeAnim, self.callbackStopAnim];
+            const strs = ["Play", "Pause", "Resume", "Stop"];
+            for (var i=0; i<4; i++) {
+                const parent = instantiate(prefab);
+                parent.setPosition(poses[i].x, poses[i].y);
+                parent.parent = root.node;
+                const btn = parent.getComponent(Button);
+                btn.node.on('click', cbs[i], self);
+                parent.getComponentInChildren(Label).string = strs[i];
+            }
         });
 
         resources.load("prefab/audio", Prefab, (err, prefab) => {
@@ -210,11 +226,23 @@ export class script extends Component {
         console.log('stop')
         this.audioSource.stop();
     }
+    callbackPlayAnim(button) {
+        this.anim.play();
+    }
+    callbackPauseAnim(button) {
+        this.anim.pause();
+    }
+    callbackResumeAnim(button) {
+        this.anim.resume();
+    }
+    callbackStopAnim(button) {
+        this.anim.stop();
+    }
     update (deltaTime: number) {
         if (this.apple == null)
             return;
         
-        this.apple.node.eulerAngles = this.rotation;
+        //this.apple.node.eulerAngles = this.rotation;
     }
 }
 
